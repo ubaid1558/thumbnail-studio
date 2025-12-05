@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thumbnail Maker</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #0f172a;
+    color: #e5e7eb;
+    margin: 0;
+    padding: 20px;
+}
+header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+h1 {
+    margin: 0;
+    font-size: 28px;
+}
+canvas {
+    border: 2px solid #374151;
+    border-radius: 10px;
+    max-width: 100%;
+    display: block;
+    margin: 20px auto;
+}
+input, select, button {
+    display: block;
+    width: 100%;
+    margin: 10px 0;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #374151;
+    background: #020617;
+    color: #e5e7eb;
+}
+button {
+    background: #22c55e;
+    color: #022c22;
+    border: none;
+    font-weight: bold;
+}
+button:hover {
+    background: #16a34a;
+    cursor: pointer;
+}
+</style>
+</head>
+<body>
+<header>
+<h1>Thumbnail Maker</h1>
+<p>Edit text and background, then download your thumbnail.</p>
+</header>
+<label>Platform</label>
+<select id="platform">
+<option value="youtube">YouTube (1280x720)</option>
+<option value="fb_post">Facebook Post (1200x630)</option>
+<option value="fb_cover">Facebook Cover (1640x720)</option>
+</select>
+<label>Background Image</label>
+<input type="file" id="bgFile">
+<label>Background Color</label>
+<input type="color" id="bgColor" value="#0f172a">
+<label>Overlay Color</label>
+<input type="color" id="overlayColor" value="#000000">
+<label>Overlay Opacity</label>
+<input type="range" id="overlayOpacity" min="0" max="0.8" step="0.05" value="0.4">
+<label>Title</label>
+<input type="text" id="titleText" placeholder="Main Title">
+<label>Subtitle</label>
+<input type="text" id="subtitleText" placeholder="Optional Subtitle">
+<label>Title Size</label>
+<input type="number" id="titleSize" value="96">
+<label>Subtitle Size</label>
+<input type="number" id="subtitleSize" value="52">
+<button id="downloadBtn">Download Thumbnail</button>
+<canvas id="thumbCanvas" width="1280" height="720"></canvas>
+<script>
+const presets = {
+    youtube: {width: 1280, height: 720},
+    fb_post: {width: 1200, height: 630},
+    fb_cover: {width: 1640, height: 720}
+};
+const canvas = document.getElementById('thumbCanvas');
+const ctx = canvas.getContext('2d');
+let bgImage = null;
+function redraw() {
+    const preset = presets[platform.value];
+    canvas.width = preset.width;
+    canvas.height = preset.height;
+    ctx.fillStyle = bgColor.value;
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    if(bgImage){
+        const ratio = Math.max(canvas.width/bgImage.width, canvas.height/bgImage.height);
+        const w = bgImage.width*ratio;
+        const h = bgImage.height*ratio;
+        ctx.drawImage(bgImage,(canvas.width-w)/2,(canvas.height-h)/2,w,h);
+    }
+    ctx.fillStyle = overlayColor.value;
+    ctx.globalAlpha = overlayOpacity.value;
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.globalAlpha = 1;
+    ctx.textAlign = "center";
+    ctx.font = `${titleSize.value}px Arial Black`;
+    ctx.fillStyle = "white";
+    ctx.fillText(titleText.value,canvas.width/2,canvas.height*0.4);
+    ctx.font = `${subtitleSize.value}px Arial`;
+    ctx.fillStyle = "yellow";
+    ctx.fillText(subtitleText.value,canvas.width/2,canvas.height*0.65);
+}
+platform.oninput = bgColor.oninput = overlayColor.oninput = overlayOpacity.oninput = titleText.oninput = subtitleText.oninput = titleSize.oninput = subtitleSize.oninput = redraw;
+bgFile.onchange = function(e){
+    const file = e.target.files[0];
+    if(!file) return;
+    const img = new Image();
+    img.onload = function(){ bgImage=img; redraw(); };
+    img.src = URL.createObjectURL(file);
+};
+downloadBtn.onclick = function(){
+    const link = document.createElement('a');
+    link.download = 'thumbnail.png';
+    link.href = canvas.toDataURL();
+    link.click();
+};
+redraw();
+</script>
+</body>
+</html>
